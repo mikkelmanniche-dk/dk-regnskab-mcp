@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic ESEF-style instance: IFRS concepts, no Danish gsd period facts. -->
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance"
+            xmlns:ifrs-full="https://xbrl.ifrs.org/taxonomy/2024-03-27/ifrs-full"
+            xmlns:iso4217="http://www.xbrl.org/2003/iso4217">
+  <xbrli:context id="d2025"><xbrli:entity><xbrli:identifier scheme="http://standards.iso.org/iso/17442">529900EXAMPLE0000001</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period></xbrli:context>
+  <xbrli:context id="d2024"><xbrli:entity><xbrli:identifier scheme="http://standards.iso.org/iso/17442">529900EXAMPLE0000001</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:startDate>2024-01-01</xbrli:startDate><xbrli:endDate>2024-12-31</xbrli:endDate></xbrli:period></xbrli:context>
+  <xbrli:context id="i2025"><xbrli:entity><xbrli:identifier scheme="http://standards.iso.org/iso/17442">529900EXAMPLE0000001</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:instant>2025-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:unit id="eur"><xbrli:measure>iso4217:EUR</xbrli:measure></xbrli:unit>
+  <ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification contextRef="d2025">Example A/S</ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification>
+  <ifrs-full:Revenue contextRef="d2025" unitRef="eur" decimals="-3">120000000</ifrs-full:Revenue>
+  <ifrs-full:Revenue contextRef="d2024" unitRef="eur" decimals="-3">110000000</ifrs-full:Revenue>
+  <ifrs-full:ProfitLoss contextRef="d2025" unitRef="eur" decimals="-3">8000000</ifrs-full:ProfitLoss>
+  <ifrs-full:Equity contextRef="i2025" unitRef="eur" decimals="-3">45000000</ifrs-full:Equity>
+</xbrli:xbrl>

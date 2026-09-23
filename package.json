@@ -1,0 +1,41 @@
+{
+  "name": "dk-regnskab-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that lets Claude (and other MCP clients) read Danish companies' published annual reports from the Danish Business Authority's open data.",
+  "type": "module",
+  "bin": {
+    "dk-regnskab-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "denmark",
+    "xbrl",
+    "annual-report",
+    "cvr",
+    "erhvervsstyrelsen"
+  ],
+  "author": "Mikkel Manniche (https://mikkelmanniche.dk)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "fast-xml-parser": "^5.11.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

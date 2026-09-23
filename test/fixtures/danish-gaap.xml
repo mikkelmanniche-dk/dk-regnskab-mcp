@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic filing. Prefixes are deliberately unusual: real filings use arbitrary ones. -->
+<x:xbrl xmlns:x="http://www.xbrl.org/2003/instance"
+        xmlns:q="http://xbrl.dcca.dk/fsa"
+        xmlns:z="http://xbrl.dcca.dk/gsd"
+        xmlns:w="http://xbrl.dcca.dk/cmn"
+        xmlns:xbrldi="http://xbrl.org/2006/xbrldi"
+        xmlns:iso4217="http://www.xbrl.org/2003/iso4217">
+  <x:context id="cur"><x:entity><x:identifier scheme="http://www.dcca.dk/cvr">12345678</x:identifier></x:entity>
+    <x:period><x:startDate>2025-01-01</x:startDate><x:endDate>2025-12-31</x:endDate></x:period></x:context>
+  <x:context id="prev"><x:entity><x:identifier scheme="http://www.dcca.dk/cvr">12345678</x:identifier></x:entity>
+    <x:period><x:startDate>2024-01-01</x:startDate><x:endDate>2024-12-31</x:endDate></x:period></x:context>
+  <x:context id="curEnd"><x:entity><x:identifier scheme="http://www.dcca.dk/cvr">12345678</x:identifier></x:entity>
+    <x:period><x:instant>2025-12-31</x:instant></x:period></x:context>
+  <x:context id="prevEnd"><x:entity><x:identifier scheme="http://www.dcca.dk/cvr">12345678</x:identifier></x:entity>
+    <x:period><x:instant>2024-12-31</x:instant></x:period></x:context>
+  <x:context id="curEndShareCapital"><x:entity><x:identifier scheme="http://www.dcca.dk/cvr">12345678</x:identifier></x:entity>
+    <x:period><x:instant>2025-12-31</x:instant></x:period>
+    <x:scenario><xbrldi:explicitMember dimension="q:ComponentsOfEquityDimension">q:ContributedCapitalMember</xbrldi:explicitMember></x:scenario></x:context>
+  <x:context id="curBoard"><x:entity><x:identifier scheme="http://www.dcca.dk/cvr">12345678</x:identifier></x:entity>
+    <x:period><x:startDate>2025-01-01</x:startDate><x:endDate>2025-12-31</x:endDate></x:period>
+    <x:scenario><xbrldi:typedMember dimension="w:IdentificationOfMemberOfExecutiveBoardDimension"><w:memberOfBoardIdentifier>1</w:memberOfBoardIdentifier></xbrldi:typedMember></x:scenario></x:context>
+  <x:unit id="dkk"><x:measure>iso4217:DKK</x:measure></x:unit>
+  <x:unit id="pure"><x:measure>x:pure</x:measure></x:unit>
+
+  <z:NameOfReportingEntity contextRef="cur" xml:lang="da">Eksempel ApS</z:NameOfReportingEntity>
+  <z:InformationOnTypeOfSubmittedReport contextRef="cur">Årsrapport</z:InformationOnTypeOfSubmittedReport>
+  <z:ReportingPeriodStartDate contextRef="cur">2025-01-01</z:ReportingPeriodStartDate>
+  <z:ReportingPeriodEndDate contextRef="cur">2025-12-31</z:ReportingPeriodEndDate>
+  <z:PrecedingReportingPeriodStartDate contextRef="cur">2024-01-01</z:PrecedingReportingPeriodStartDate>
+  <z:PredingReportingPeriodEndDate contextRef="cur">2024-12-31</z:PredingReportingPeriodEndDate>
+  <w:NameOfAuditFirm contextRef="cur">Revisor &amp; Co</w:NameOfAuditFirm>
+
+  <q:GrossProfitLoss contextRef="cur" unitRef="dkk" decimals="0">2500000</q:GrossProfitLoss>
+  <q:GrossProfitLoss contextRef="prev" unitRef="dkk" decimals="0">2100000</q:GrossProfitLoss>
+  <q:ProfitLoss contextRef="cur" unitRef="dkk" decimals="0">-150000</q:ProfitLoss>
+  <q:ProfitLoss contextRef="prev" unitRef="dkk" decimals="0">320000</q:ProfitLoss>
+  <q:ProfitLoss contextRef="curBoard" unitRef="dkk" decimals="0">999</q:ProfitLoss>
+  <q:Equity contextRef="curEndShareCapital" unitRef="dkk" decimals="0">80000</q:Equity>
+  <q:Equity contextRef="curEnd" unitRef="dkk" decimals="0">6002479</q:Equity>
+  <q:Equity contextRef="prevEnd" unitRef="dkk" decimals="0">6152479</q:Equity>
+  <q:Assets contextRef="curEnd" unitRef="dkk" decimals="0">9000000</q:Assets>
+  <q:AverageNumberOfEmployees contextRef="cur" unitRef="pure" decimals="0">0</q:AverageNumberOfEmployees>
+  <q:AverageNumberOfEmployees contextRef="cur" unitRef="pure" decimals="0">1</q:AverageNumberOfEmployees>
+  <q:AverageNumberOfEmployees contextRef="prev" unitRef="pure" decimals="0">2</q:AverageNumberOfEmployees>
+</x:xbrl>
