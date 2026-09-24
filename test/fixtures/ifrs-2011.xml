@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Synthetic ESEF-style instance: IFRS concepts, no Danish gsd period facts. -->
 <xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance"
-            xmlns:ifrs-full="https://xbrl.ifrs.org/taxonomy/2024-03-27/ifrs-full"
+            xmlns:ifrs-full="http://xbrl.ifrs.org/taxonomy/2011-03-25/ifrs"
             xmlns:iso4217="http://www.xbrl.org/2003/iso4217" xmlns:xbrldi="http://xbrl.org/2006/xbrldi">
   <xbrli:context id="d2025"><xbrli:entity><xbrli:identifier scheme="http://standards.iso.org/iso/17442">529900EXAMPLE0000001</xbrli:identifier></xbrli:entity>
     <xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period></xbrli:context>

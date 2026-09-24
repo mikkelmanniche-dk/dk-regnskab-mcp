@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic Danish group report: group figures carry ConsolidatedMember, plain facts are the parent's. -->
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:fsa="http://xbrl.dcca.dk/fsa"
+            xmlns:gsd="http://xbrl.dcca.dk/gsd" xmlns:cmn="http://xbrl.dcca.dk/cmn" xmlns:xbrldi="http://xbrl.org/2006/xbrldi">
+  <xbrli:context id="d"><xbrli:entity><xbrli:identifier scheme="http://www.dcca.dk/cvr">87654321</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period></xbrli:context>
+  <xbrli:context id="i"><xbrli:entity><xbrli:identifier scheme="http://www.dcca.dk/cvr">87654321</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:instant>2025-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="dG"><xbrli:entity><xbrli:identifier scheme="http://www.dcca.dk/cvr">87654321</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period>
+    <xbrli:scenario><xbrldi:explicitMember dimension="cmn:ConsolidatedSoloDimension"> cmn:ConsolidatedMember </xbrldi:explicitMember></xbrli:scenario></xbrli:context>
+  <xbrli:context id="iG"><xbrli:entity><xbrli:identifier scheme="http://www.dcca.dk/cvr">87654321</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:instant>2025-12-31</xbrli:instant></xbrli:period>
+    <xbrli:scenario><xbrldi:explicitMember dimension="cmn:ConsolidatedSoloDimension">cmn:ConsolidatedMember</xbrldi:explicitMember></xbrli:scenario></xbrli:context>
+  <xbrli:context id="iGshare"><xbrli:entity><xbrli:identifier scheme="http://www.dcca.dk/cvr">87654321</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:instant>2025-12-31</xbrli:instant></xbrli:period>
+    <xbrli:scenario><xbrldi:explicitMember dimension="cmn:ConsolidatedSoloDimension">cmn:ConsolidatedMember</xbrldi:explicitMember>
+      <xbrldi:explicitMember dimension="fsa:ClassesOfEquityDimension">fsa:ContributedCapitalMember</xbrldi:explicitMember></xbrli:scenario></xbrli:context>
+  <xbrli:unit id="DKK"><xbrli:measure>iso4217:DKK</xbrli:measure></xbrli:unit>
+  <gsd:NameOfReportingEntity contextRef="d">Koncern Holding ApS</gsd:NameOfReportingEntity>
+  <gsd:ReportingPeriodStartDate contextRef="d">2025-01-01</gsd:ReportingPeriodStartDate>
+  <gsd:ReportingPeriodEndDate contextRef="d">2025-12-31</gsd:ReportingPeriodEndDate>
+  <fsa:ProfitLoss contextRef="d" unitRef="DKK" decimals="0">38793000</fsa:ProfitLoss>
+  <fsa:ProfitLoss contextRef="dG" unitRef="DKK" decimals="0">43020000</fsa:ProfitLoss>
+  <fsa:Assets contextRef="i" unitRef="DKK" decimals="0">200</fsa:Assets>
+  <fsa:LiabilitiesAndEquity contextRef="i" unitRef="DKK" decimals="0">200</fsa:LiabilitiesAndEquity>
+  <fsa:Assets contextRef="iG" unitRef="DKK" decimals="0">900</fsa:Assets>
+  <fsa:LiabilitiesAndEquity contextRef="iG" unitRef="DKK" decimals="0">950</fsa:LiabilitiesAndEquity>
+  <fsa:Equity contextRef="iG" unitRef="DKK" decimals="0">400</fsa:Equity>
+  <fsa:Equity contextRef="iGshare" unitRef="DKK" decimals="0">50</fsa:Equity>
+</xbrli:xbrl>

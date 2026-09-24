@@ -10,10 +10,12 @@ export interface KeyFigure {
   period: Period;
   fsa: string[];
   ifrs: string[];
+  // Danish IFRS extension used before ESEF (until 2020), e.g. NetSales.
+  ifrsDk?: string[];
 }
 
 export const KEY_FIGURES: KeyFigure[] = [
-  { key: "revenue", label: "Nettoomsætning / Revenue", period: "duration", fsa: ["Revenue"], ifrs: ["Revenue", "RevenueFromContractsWithCustomers"] },
+  { key: "revenue", label: "Nettoomsætning / Revenue", period: "duration", fsa: ["Revenue"], ifrs: ["Revenue", "RevenueFromContractsWithCustomers"], ifrsDk: ["NetSales"] },
   { key: "grossProfit", label: "Bruttofortjeneste / Gross profit", period: "duration", fsa: ["GrossProfitLoss", "GrossResult"], ifrs: ["GrossProfit"] },
   { key: "operatingProfit", label: "Resultat af primær drift / Operating profit", period: "duration", fsa: ["ProfitLossFromOrdinaryOperatingActivities"], ifrs: ["ProfitLossFromOperatingActivities"] },
   { key: "profitBeforeTax", label: "Resultat før skat / Profit before tax", period: "duration", fsa: ["ProfitLossFromOrdinaryActivitiesBeforeTax"], ifrs: ["ProfitLossBeforeTax"] },
@@ -33,4 +35,8 @@ export const NS = {
   xbrli: "http://www.xbrl.org/2003/instance",
   // ESEF filings use a dated IFRS namespace, e.g. https://xbrl.ifrs.org/taxonomy/2024-03-27/ifrs-full
   ifrsSuffix: "/ifrs-full",
+  // Filings before 2016 use the 2011 taxonomy: http://xbrl.ifrs.org/taxonomy/2011-03-25/ifrs
+  ifrsLegacy: /^https?:\/\/xbrl\.ifrs\.org\/taxonomy\/[^/]+\/ifrs$/,
+  // e.g. http://xbrl.dcca.dk/ifrs-dk-cor_2019-12-20
+  ifrsDkMarker: "/ifrs-dk-cor",
 } as const;
