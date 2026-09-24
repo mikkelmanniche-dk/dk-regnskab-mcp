@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — unreleased
+## 0.2.0 — 2026-09-24
 
 - `get_financials` gets `scope`: consolidated group (default) or parent company for group reports, in both Danish GAAP and IFRS. Before, a group report could return a mix.
 - Balance check: a note when total assets don't equal liabilities and equity.
@@ -11,7 +11,7 @@
 - IFRS results explain the missing employee count.
 - `npm run measure`: live check against real filings.
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-09-23
 
 - `get_financials`: key figures (current and previous year), period, currency and auditor from a company's latest or chosen annual report.
 - `list_filings`: a company's published filings with document links.
