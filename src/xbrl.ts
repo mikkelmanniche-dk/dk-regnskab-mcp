@@ -10,7 +10,14 @@ interface Context {
   // true when the context carries any dimension (explicit or typed member).
   // Dimensional facts are breakdowns (e.g. equity per share class), never totals.
   dimensional: boolean;
+  // Which entity the context describes. Group reports tag either the group's
+  // or the parent's figures with a consolidated/solo dimension; everything
+  // else with a dimension is a breakdown.
+  role: Role;
 }
+
+type Role = "plain" | "consolidated" | "solo" | "breakdown";
+export type Scope = "group" | "parent";
 
 interface Fact {
   ns: string;
@@ -32,6 +39,10 @@ export interface Financials {
   name: string | null;
   reportType: string | null;
   taxonomy: "danish-gaap" | "ifrs" | "unknown";
+  // "group" when the figures are the consolidated group's, "parent" when they
+  // are the parent company's own in a group report, "company" otherwise.
+  scope: "group" | "parent" | "company";
+  groupReport: boolean;
   period: { start: string; end: string } | null;
   previousPeriod: { start: string | null; end: string | null } | null;
   currency: string | null;
@@ -69,8 +80,29 @@ const text = (v: unknown): string | undefined => {
 const first = <T>(v: T | T[] | undefined): T | undefined => (Array.isArray(v) ? v[0] : v);
 const many = <T>(v: T | T[] | undefined): T[] => (v == null ? [] : Array.isArray(v) ? v : [v]);
 
-function hasDimension(node: unknown): boolean {
-  return child(node, "explicitMember") !== undefined || child(node, "typedMember") !== undefined;
+// Danish GAAP and IFRS name the group-vs-parent dimension differently.
+const CONSOLIDATION_DIMENSIONS = new Set(["ConsolidatedSoloDimension", "ConsolidatedAndSeparateFinancialStatementsAxis"]);
+const SOLO_MEMBERS = new Set(["SoloMember", "SeparateMember"]);
+
+function dimensions(node: unknown): { dimension: string; member: string | null }[] {
+  const out: { dimension: string; member: string | null }[] = [];
+  for (const m of many(child(node, "explicitMember"))) {
+    out.push({ dimension: local(String((m as any)?.["@_dimension"] ?? "")), member: local(text(m) ?? "") });
+  }
+  for (const m of many(child(node, "typedMember"))) {
+    out.push({ dimension: local(String((m as any)?.["@_dimension"] ?? "")), member: null });
+  }
+  return out;
+}
+
+function roleOf(dims: { dimension: string; member: string | null }[]): Role {
+  if (dims.length === 0) return "plain";
+  const [d] = dims;
+  if (dims.length === 1 && d && CONSOLIDATION_DIMENSIONS.has(d.dimension)) {
+    if (d.member === "ConsolidatedMember") return "consolidated";
+    if (d.member && SOLO_MEMBERS.has(d.member)) return "solo";
+  }
+  return "breakdown";
 }
 
 export function parseInstance(xml: string): { contexts: Map<string, Context>; facts: Fact[]; units: Map<string, string> } {
@@ -98,13 +130,15 @@ export function parseInstance(xml: string): { contexts: Map<string, Context>; fa
       for (const c of many(value)) {
         const period = child(c, "period");
         const entity = child(c, "entity");
+        const dims = [...dimensions(child(c, "scenario")), ...dimensions(child(entity, "segment"))];
         contexts.set(c["@_id"], {
           id: c["@_id"],
           start: text(child(period, "startDate")),
           end: text(child(period, "endDate")),
           instant: text(child(period, "instant")),
           entity: text(child(entity, "identifier")),
-          dimensional: hasDimension(child(c, "scenario")) || hasDimension(child(entity, "segment")),
+          dimensional: dims.length > 0,
+          role: roleOf(dims),
         });
       }
       continue;
@@ -128,13 +162,20 @@ export function parseInstance(xml: string): { contexts: Map<string, Context>; fa
   return { contexts, facts, units };
 }
 
+// Some filers put formatting markup inside text facts (seen: a whole HTML
+// table around the company name).
+const cleanText = (v: string) => v.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
 function textFact(facts: Fact[], ns: string, name: string): string | null {
-  return facts.find((f) => f.ns === ns && f.name === name)?.value ?? null;
+  const v = facts.find((f) => f.ns === ns && f.name === name)?.value;
+  return v == null ? null : cleanText(v) || null;
 }
+
+const isIfrsNs = (ns: string) => ns.endsWith(NS.ifrsSuffix) || NS.ifrsLegacy.test(ns);
 
 function detectTaxonomy(facts: Fact[]): { taxonomy: Financials["taxonomy"]; ns: string | null } {
   if (facts.some((f) => f.ns === NS.fsa)) return { taxonomy: "danish-gaap", ns: NS.fsa };
-  const ifrs = facts.find((f) => f.ns.endsWith(NS.ifrsSuffix));
+  const ifrs = facts.find((f) => isIfrsNs(f.ns));
   if (ifrs) return { taxonomy: "ifrs", ns: ifrs.ns };
   return { taxonomy: "unknown", ns: null };
 }
@@ -165,32 +206,45 @@ function reportingPeriods(facts: Fact[], contexts: Map<string, Context>) {
   return { current, previous };
 }
 
+interface Source {
+  ns: string;
+  names: string[];
+}
+
 function pick(
-  figure: KeyFigure,
-  names: string[],
-  ns: string,
+  figure: Pick<KeyFigure, "label" | "period">,
+  sources: Source[],
   facts: Fact[],
   contexts: Map<string, Context>,
   period: { start: string | null; end: string | null } | null,
   notes: string[],
   which: string,
+  role: Role,
+  usedUnits?: Set<string>,
 ): number | null {
   if (!period?.end) return null;
-  for (const name of names) {
+  for (const { ns, name } of sources.flatMap((s) => s.names.map((name) => ({ ns: s.ns, name })))) {
     const values = new Set<number>();
+    const units = new Set<string>();
     for (const f of facts) {
       if (f.ns !== ns || f.name !== name) continue;
       const c = contexts.get(f.contextRef);
-      if (!c || c.dimensional) continue;
+      if (!c || c.role !== role) continue;
       const matches =
         figure.period === "instant"
           ? c.instant === period.end
           : c.end === period.end && (period.start == null || c.start === period.start);
       if (!matches) continue;
       const n = Number(f.value);
-      if (Number.isFinite(n)) values.add(n);
+      if (Number.isFinite(n)) {
+        values.add(n);
+        if (f.unitRef) units.add(f.unitRef);
+      }
     }
-    if (values.size === 1) return [...values][0]!;
+    if (values.size === 1) {
+      for (const u of units) usedUnits?.add(u);
+      return [...values][0]!;
+    }
     if (values.size > 1) {
       // Seen in real filings: 0 and 1 employees reported for the same period.
       // Guessing would be worse than admitting it.
@@ -201,30 +255,61 @@ function pick(
   return null;
 }
 
-export function extractFinancials(xml: string): Financials {
+export function extractFinancials(xml: string, scope: Scope = "group"): Financials {
   const { contexts, facts, units } = parseInstance(xml);
   const notes: string[] = [];
   const { taxonomy, ns } = detectTaxonomy(facts);
   const { current, previous } = reportingPeriods(facts, contexts);
 
+  // In a group report one entity's figures are tagged with a consolidation
+  // dimension and the other's are plain. Danish filings usually tag the group
+  // (plain = parent); IFRS tags the parent (plain = group).
+  const roles = new Set([...contexts.values()].map((c) => c.role));
+  const groupReport = roles.has("consolidated") || roles.has("solo");
+  const groupRole: Role = roles.has("consolidated") ? "consolidated" : "plain";
+  const parentRole: Role = roles.has("solo") ? "solo" : "plain";
+  const role: Role = !groupReport ? "plain" : scope === "parent" ? parentRole : groupRole;
+  if (groupReport) {
+    notes.push(
+      scope === "parent"
+        ? "Group report: these are the parent company's own figures. Use scope \"group\" for the consolidated group."
+        : "Group report: these are the consolidated group's figures. Use scope \"parent\" for the parent company alone.",
+    );
+  }
+
+  const dkNs = facts.find((f) => f.ns.includes(NS.ifrsDkMarker))?.ns;
+  const sourcesFor = (fig: KeyFigure): Source[] => {
+    if (!ns) return [];
+    if (taxonomy !== "ifrs") return [{ ns, names: fig.fsa }];
+    return dkNs && fig.ifrsDk ? [{ ns, names: fig.ifrs }, { ns: dkNs, names: fig.ifrsDk }] : [{ ns, names: fig.ifrs }];
+  };
+
+  // The currency is whatever unit the reported figures actually use. A filing
+  // may mention other currencies elsewhere (Maersk: USD statements, a few DKK facts).
+  const usedUnits = new Set<string>();
+  const figures: FigureValue[] = KEY_FIGURES.map((fig) => ({
+    key: fig.key,
+    label: fig.label,
+    current: pick(fig, sourcesFor(fig), facts, contexts, current, notes, "current", role, usedUnits),
+    previous: pick(fig, sourcesFor(fig), facts, contexts, previous, notes, "previous", role, usedUnits),
+  }));
   const currencyUnits = new Set(
-    facts
-      .filter((f) => f.unitRef && ns && f.ns === ns)
-      .map((f) => units.get(f.unitRef!))
-      .filter((u): u is string => !!u && u !== "pure" && u !== "shares"),
+    [...usedUnits].map((u) => units.get(u)).filter((u): u is string => !!u && u !== "pure" && u !== "shares"),
   );
-  if (currencyUnits.size > 1) notes.push(`Several currencies in the filing: ${[...currencyUnits].join(", ")}.`);
+  if (currencyUnits.size > 1) notes.push(`The key figures use several currencies: ${[...currencyUnits].join(", ")}.`);
 
-  const figures: FigureValue[] = KEY_FIGURES.map((fig) => {
-    const names = taxonomy === "ifrs" ? fig.ifrs : fig.fsa;
-    return {
-      key: fig.key,
-      label: fig.label,
-      current: ns ? pick(fig, names, ns, facts, contexts, current, notes, "current") : null,
-      previous: ns ? pick(fig, names, ns, facts, contexts, previous, notes, "previous") : null,
-    };
-  });
+  // Sanity check: total assets must equal total liabilities and equity.
+  const assets = figures.find((f) => f.key === "assets")?.current;
+  const balance = ns
+    ? pick({ label: "Passiver i alt / Liabilities and equity", period: "instant" }, [{ ns, names: taxonomy === "ifrs" ? ["EquityAndLiabilities"] : ["LiabilitiesAndEquity"] }], facts, contexts, current, [], "current", role)
+    : null;
+  if (assets != null && balance != null && Math.abs(assets - balance) > 1) {
+    notes.push(`Total assets (${assets}) do not equal liabilities and equity (${balance}) in the filing — treat the balance sheet with care.`);
+  }
 
+  if (taxonomy === "ifrs" && figures.find((f) => f.key === "employees")?.current == null) {
+    notes.push("No employee count: IFRS/ESEF filings state it in the notes as text, not as a tagged figure.");
+  }
   if (taxonomy === "danish-gaap" && figures.find((f) => f.key === "revenue")?.current == null) {
     notes.push("No revenue figure: most small Danish companies (reporting class B) may legally omit revenue and report gross profit instead.");
   }
@@ -234,10 +319,14 @@ export function extractFinancials(xml: string): Financials {
     // ESEF filings name the company in the IFRS taxonomy instead of gsd.
     name:
       textFact(facts, NS.gsd, "NameOfReportingEntity") ??
-      facts.find((f) => f.ns.endsWith(NS.ifrsSuffix) && f.name === "NameOfReportingEntityOrOtherMeansOfIdentification")?.value ??
-      null,
+      (() => {
+        const v = facts.find((f) => isIfrsNs(f.ns) && f.name === "NameOfReportingEntityOrOtherMeansOfIdentification")?.value;
+        return v ? cleanText(v) || null : null;
+      })(),
     reportType: textFact(facts, NS.gsd, "InformationOnTypeOfSubmittedReport"),
     taxonomy,
+    scope: !groupReport ? "company" : scope,
+    groupReport,
     period: current,
     previousPeriod: previous,
     currency: currencyUnits.size === 1 ? [...currencyUnits][0]! : null,

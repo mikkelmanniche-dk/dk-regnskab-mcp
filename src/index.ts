@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { getFinancials, listFilings } from "./virk.ts";
 
-const server = new McpServer({ name: "dk-regnskab-mcp", version: "0.1.0" });
+const server = new McpServer({ name: "dk-regnskab-mcp", version: "0.2.0" });
 
 const json = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
 const fail = (err: unknown) => ({
@@ -39,7 +39,7 @@ server.registerTool(
   {
     title: "Get key financials from an annual report",
     description:
-      "Read a Danish company's published annual report (XBRL) and return key figures for the reporting year and the year before: revenue, gross profit, profit, equity, assets, cash, employees, plus auditor. " +
+      "Read a Danish company's published annual report (XBRL) and return key figures for the reporting year and the year before: revenue, gross profit, profit, equity, assets, cash, employees, plus auditor. For group reports it returns the consolidated group by default. " +
       "Values are in the filing's currency (usually DKK). Small companies often omit revenue legally; notes explain gaps and conflicts instead of guessing.",
     inputSchema: {
       cvr,
@@ -50,11 +50,15 @@ server.registerTool(
         .max(2100)
         .optional()
         .describe("Calendar year the reporting period ends in. Omit for the latest annual report."),
+      scope: z
+        .enum(["group", "parent"])
+        .default("group")
+        .describe("For group reports (koncernregnskab): the consolidated group, or the parent company alone. Ignored for single companies."),
     },
   },
-  async ({ cvr, year }) => {
+  async ({ cvr, year, scope }) => {
     try {
-      const result = await getFinancials(cvr, year);
+      const result = await getFinancials(cvr, year, scope);
       if (!result) {
         return json({
           found: false,

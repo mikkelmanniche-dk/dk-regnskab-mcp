@@ -45,12 +45,58 @@ test("Danish GAAP: missing revenue is explained", () => {
 test("IFRS/ESEF: infers periods from contexts and reads IFRS concepts", () => {
   const f = extractFinancials(fixture("ifrs.xml"));
   assert.equal(f.taxonomy, "ifrs");
+  // Markup inside the name fact is stripped.
   assert.equal(f.name, "Example A/S");
   assert.equal(f.currency, "EUR");
   assert.deepEqual(f.period, { start: "2025-01-01", end: "2025-12-31" });
   assert.equal(figure(f, "revenue").current, 120000000);
   assert.equal(figure(f, "revenue").previous, 110000000);
   assert.equal(figure(f, "equity").current, 45000000);
+});
+
+test("IFRS group report: plain facts are the group, SeparateMember is the parent", () => {
+  const group = extractFinancials(fixture("ifrs.xml"));
+  assert.equal(group.groupReport, true);
+  assert.equal(group.scope, "group");
+  assert.equal(figure(group, "profit").current, 8000000);
+  const parent = extractFinancials(fixture("ifrs.xml"), "parent");
+  assert.equal(parent.scope, "parent");
+  assert.equal(figure(parent, "profit").current, 5000000);
+});
+
+test("Danish group report: ConsolidatedMember is the group, plain facts are the parent", () => {
+  const group = extractFinancials(fixture("group-danish.xml"));
+  assert.equal(group.scope, "group");
+  assert.equal(figure(group, "profit").current, 43020000);
+  // The equity breakdown inside the group must not replace the group total.
+  assert.equal(figure(group, "equity").current, 400);
+  assert.ok(group.notes.some((n) => n.includes("do not equal")), "group balance mismatch is flagged");
+  const parent = extractFinancials(fixture("group-danish.xml"), "parent");
+  assert.equal(figure(parent, "profit").current, 38793000);
+  assert.equal(figure(parent, "assets").current, 200);
+  assert.ok(!parent.notes.some((n) => n.includes("do not equal")));
+});
+
+test("a single company is reported as such", () => {
+  const f = extractFinancials(fixture("danish-gaap.xml"));
+  assert.equal(f.groupReport, false);
+  assert.equal(f.scope, "company");
+  assert.ok(!f.notes.some((n) => n.includes("Group report")));
+});
+
+test("IFRS 2011 taxonomy (filings before 2016) is recognised", () => {
+  const legacy = extractFinancials(fixture("ifrs-2011.xml"));
+  const current = extractFinancials(fixture("ifrs.xml"));
+  assert.equal(legacy.taxonomy, "ifrs");
+  assert.deepEqual(legacy.figures, current.figures);
+});
+
+test("pre-ESEF IFRS: revenue from the Danish IFRS extension (NetSales)", () => {
+  const f = extractFinancials(fixture("ifrs-dk-2019.xml"));
+  assert.equal(f.taxonomy, "ifrs");
+  assert.equal(figure(f, "revenue").current, 122021000000);
+  assert.equal(figure(f, "profit").current, 38951000000);
+  assert.equal(f.currency, "DKK");
 });
 
 test("rejects input that isn't an XBRL instance", () => {
