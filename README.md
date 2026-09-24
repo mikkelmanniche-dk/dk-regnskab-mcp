@@ -1,6 +1,12 @@
 # dk-regnskab-mcp
 
+[![CI](https://github.com/mikkelmanniche-dk/dk-regnskab-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/mikkelmanniche-dk/dk-regnskab-mcp/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/mikkelmanniche-dk/dk-regnskab-mcp)](https://github.com/mikkelmanniche-dk/dk-regnskab-mcp/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Give Claude (or any MCP client) the published annual reports of Danish companies: key figures for the latest year and the year before, read straight from the XBRL filings at the Danish Business Authority (Erhvervsstyrelsen). No API key needed.
+
+Works for small companies (Danish GAAP) and listed ones (IFRS/ESEF, back to 2015), separates group and parent figures in group reports, and explains gaps instead of guessing. Tested live against about 300 real filings.
 
 > "What were revenue and equity for CVR 24256790 last year, and how did they change?"
 
