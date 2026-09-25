@@ -1,6 +1,6 @@
 {
   "name": "dk-regnskab-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server that lets Claude (and other MCP clients) read Danish companies' published annual reports from the Danish Business Authority's open data.",
   "type": "module",
   "bin": {

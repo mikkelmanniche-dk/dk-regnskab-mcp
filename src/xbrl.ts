@@ -192,7 +192,9 @@ function reportingPeriods(facts: Fact[], contexts: Map<string, Context>) {
 
   const durations = [...contexts.values()]
     .filter((c) => !c.dimensional && c.start && c.end)
-    .sort((a, b) => b.end!.localeCompare(a.end!));
+    // Same end date: the longest period wins. Annual reports can also tag the
+    // last quarter (seen at Maersk 2020: Q4 and full year both end 31 December).
+    .sort((a, b) => b.end!.localeCompare(a.end!) || a.start!.localeCompare(b.start!));
 
   const current = start && end ? { start, end } : durations[0] ? { start: durations[0].start!, end: durations[0].end! } : null;
   if (!current) return { current: null, previous: null };
@@ -255,20 +257,24 @@ function pick(
   return null;
 }
 
+// In a group report one entity's figures are tagged with a consolidation
+// dimension and the other's are plain. Danish filings usually tag the group
+// (plain = parent); IFRS tags the parent (plain = group).
+function scopeRole(contexts: Map<string, Context>, scope: Scope): { groupReport: boolean; role: Role } {
+  const roles = new Set([...contexts.values()].map((c) => c.role));
+  const groupReport = roles.has("consolidated") || roles.has("solo");
+  const groupRole: Role = roles.has("consolidated") ? "consolidated" : "plain";
+  const parentRole: Role = roles.has("solo") ? "solo" : "plain";
+  return { groupReport, role: !groupReport ? "plain" : scope === "parent" ? parentRole : groupRole };
+}
+
 export function extractFinancials(xml: string, scope: Scope = "group"): Financials {
   const { contexts, facts, units } = parseInstance(xml);
   const notes: string[] = [];
   const { taxonomy, ns } = detectTaxonomy(facts);
   const { current, previous } = reportingPeriods(facts, contexts);
 
-  // In a group report one entity's figures are tagged with a consolidation
-  // dimension and the other's are plain. Danish filings usually tag the group
-  // (plain = parent); IFRS tags the parent (plain = group).
-  const roles = new Set([...contexts.values()].map((c) => c.role));
-  const groupReport = roles.has("consolidated") || roles.has("solo");
-  const groupRole: Role = roles.has("consolidated") ? "consolidated" : "plain";
-  const parentRole: Role = roles.has("solo") ? "solo" : "plain";
-  const role: Role = !groupReport ? "plain" : scope === "parent" ? parentRole : groupRole;
+  const { groupReport, role } = scopeRole(contexts, scope);
   if (groupReport) {
     notes.push(
       scope === "parent"
@@ -344,4 +350,57 @@ export function extractFinancials(xml: string, scope: Scope = "group"): Financia
 // always the one holding the numbers).
 export function score(f: Financials): number {
   return f.figures.reduce((n, x) => n + (x.current != null ? 1 : 0), 0);
+}
+
+export interface ReportFact {
+  concept: string;
+  taxonomy: string;
+  period: string;
+  value: number | string;
+  unit: string | null;
+}
+
+const MAX_TEXT = 500;
+
+function taxonomyLabel(ns: string): string {
+  if (ns === NS.fsa) return "fsa";
+  if (ns === NS.gsd) return "gsd";
+  if (ns === NS.cmn) return "cmn";
+  if (ns.includes(NS.ifrsDkMarker)) return "ifrs-dk";
+  if (isIfrsNs(ns)) return "ifrs";
+  return ns.split(/[/#]/).filter(Boolean).pop() ?? ns;
+}
+
+// Every total the filing tags for the chosen entity (group or parent), not only
+// the key figures: the full statements as far as the filer tagged them.
+// Breakdowns by dimension are left out for the same reason as in extractFinancials.
+export function extractFacts(xml: string, scope: Scope = "group"): { groupReport: boolean; facts: ReportFact[] } {
+  const { contexts, facts, units } = parseInstance(xml);
+  const { groupReport, role } = scopeRole(contexts, scope);
+  const out: ReportFact[] = [];
+  const seen = new Set<string>();
+  for (const f of facts) {
+    const c = contexts.get(f.contextRef);
+    if (!c) continue;
+    const n = Number(f.value);
+    const numeric = f.unitRef != null && Number.isFinite(n);
+    // Text about the report itself (name, auditor, opinion) sits in plain
+    // contexts even when the group's figures are tagged with a dimension.
+    if (c.role !== role && !(!numeric && c.role === "plain")) continue;
+    const period = c.instant ?? (c.start && c.end ? `${c.start}..${c.end}` : null);
+    if (!period) continue;
+    const value = numeric ? n : cleanText(f.value);
+    if (value === "") continue;
+    const key = `${f.ns}|${f.name}|${period}|${value}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      concept: f.name,
+      taxonomy: taxonomyLabel(f.ns),
+      period,
+      value: typeof value === "string" && value.length > MAX_TEXT ? `${value.slice(0, MAX_TEXT)}…` : value,
+      unit: numeric ? (units.get(f.unitRef!) ?? null) : null,
+    });
+  }
+  return { groupReport, facts: out };
 }
