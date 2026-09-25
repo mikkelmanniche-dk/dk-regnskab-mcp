@@ -5,7 +5,7 @@ import { z } from "zod";
 import { searchCompanies } from "./cvr.ts";
 import { getFinancials, getFinancialsHistory, getReportFacts, listFilings } from "./virk.ts";
 
-const server = new McpServer({ name: "dk-regnskab-mcp", version: "0.3.0" });
+const server = new McpServer({ name: "dk-regnskab-mcp", version: "0.3.1" });
 
 // Every result goes out both as structured content (checked against the tool's
 // output schema) and as JSON text for clients that only read text.

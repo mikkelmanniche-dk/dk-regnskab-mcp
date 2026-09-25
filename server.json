@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mikkelmanniche-dk/dk-regnskab-mcp",
+  "title": "Danish annual reports (CVR)",
+  "description": "Key figures, history and all tagged facts from Danish companies' annual reports (XBRL).",
+  "repository": {
+    "url": "https://github.com/mikkelmanniche-dk/dk-regnskab-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/mikkelmanniche-dk/dk-regnskab-mcp",
+  "version": "0.3.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "dk-regnskab-mcp",
+      "version": "0.3.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CVR_USER",
+          "description": "Optional. CVR register system-to-system username, only needed for search_company.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "CVR_PASSWORD",
+          "description": "Optional. CVR register system-to-system password, only needed for search_company.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

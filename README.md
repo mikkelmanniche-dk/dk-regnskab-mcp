@@ -12,17 +12,12 @@ Works for small companies (Danish GAAP) and listed ones (IFRS/ESEF, back to 2015
 
 ## Quickstart
 
-Requires Node.js 22.18 or newer.
-
-```bash
-git clone https://github.com/mikkelmanniche-dk/dk-regnskab-mcp
-cd dk-regnskab-mcp && npm install && npm run build
-```
+Requires Node.js 22.18 or newer. No API key needed.
 
 **Claude Code**
 
 ```bash
-claude mcp add dk-regnskab -- node /absolute/path/to/dk-regnskab-mcp/dist/index.js
+claude mcp add dk-regnskab -- npx -y dk-regnskab-mcp
 ```
 
 **Claude Desktop**: add this to `claude_desktop_config.json`:
@@ -30,9 +25,19 @@ claude mcp add dk-regnskab -- node /absolute/path/to/dk-regnskab-mcp/dist/index.
 ```json
 {
   "mcpServers": {
-    "dk-regnskab": { "command": "node", "args": ["/absolute/path/to/dk-regnskab-mcp/dist/index.js"] }
+    "dk-regnskab": { "command": "npx", "args": ["-y", "dk-regnskab-mcp"] }
   }
 }
+```
+
+**Cursor**: the same block goes in `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project). Other MCP clients: run `npx -y dk-regnskab-mcp` over stdio.
+
+**From source**
+
+```bash
+git clone https://github.com/mikkelmanniche-dk/dk-regnskab-mcp
+cd dk-regnskab-mcp && npm install && npm run build
+claude mcp add dk-regnskab -- node /absolute/path/to/dk-regnskab-mcp/dist/index.js
 ```
 
 ## Tools
@@ -54,7 +59,7 @@ Key figures: revenue, gross profit, operating profit, profit before tax, profit 
 `search_company` uses the CVR register, which requires system-to-system credentials. They are free: [apply at the Danish Business Authority](https://datacvr.virk.dk/artikel/system-til-system-adgang-til-cvr-data), then pass them to the server:
 
 ```bash
-claude mcp add dk-regnskab -e CVR_USER=... -e CVR_PASSWORD=... -- node /absolute/path/to/dk-regnskab-mcp/dist/index.js
+claude mcp add dk-regnskab -e CVR_USER=... -e CVR_PASSWORD=... -- npx -y dk-regnskab-mcp
 ```
 
 Everything else works without them. Note that the register, like the filing index, only answers over plain HTTP, so the credentials are sent unencrypted. They only give read access to public company data.
@@ -116,7 +121,7 @@ npm run build
 
 - [x] Company name search via the CVR register
 - [x] Multi-year history in one call
-- [ ] Publish to npm for `npx` usage
+- [x] Published to npm and the official MCP Registry
 
 ## License
 

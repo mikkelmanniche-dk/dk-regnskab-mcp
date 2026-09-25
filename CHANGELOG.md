@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 — 2026-09-25
+
+- Published to npm (`npx -y dk-regnskab-mcp`) and listed in the official MCP Registry as `io.github.mikkelmanniche-dk/dk-regnskab-mcp` (`server.json`).
+- README: `npx` setup for Claude Code, Claude Desktop and Cursor.
+- `package.json`: repository, homepage and `mcpName`; tests and build run before every publish.
+
 ## 0.3.0 — 2026-09-25
 
 - `search_company`: find a CVR number by company name in the CVR register. Needs free system-to-system credentials (`CVR_USER`, `CVR_PASSWORD`); without them the tool explains how to get access.
