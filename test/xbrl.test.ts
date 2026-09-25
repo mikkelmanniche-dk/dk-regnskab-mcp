@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { extractFinancials } from "../src/xbrl.ts";
+import { extractFacts, extractFinancials } from "../src/xbrl.ts";
 import { normalizeCvr } from "../src/virk.ts";
 
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -107,4 +107,42 @@ test("normalizeCvr accepts common spellings and rejects the rest", () => {
   assert.equal(normalizeCvr("DK 1234 5678"), "12345678");
   assert.equal(normalizeCvr("12-34-56-78"), "12345678");
   assert.throws(() => normalizeCvr("1234"), /not a CVR number/);
+});
+
+test("extractFacts: returns every total with taxonomy, period and unit", () => {
+  const { groupReport, facts } = extractFacts(fixture("danish-gaap.xml"));
+  assert.equal(groupReport, false);
+  assert.deepEqual(
+    facts.filter((f) => f.concept === "Equity"),
+    [
+      { concept: "Equity", taxonomy: "fsa", period: "2025-12-31", value: 6002479, unit: "DKK" },
+      { concept: "Equity", taxonomy: "fsa", period: "2024-12-31", value: 6152479, unit: "DKK" },
+    ],
+  );
+  // The share-capital breakdown is a dimensional fact, not a total.
+  assert.ok(!facts.some((f) => f.value === 80000));
+  assert.ok(facts.some((f) => f.concept === "NameOfReportingEntity" && f.value === "Eksempel ApS"));
+});
+
+test("extractFacts: group and parent figures are kept apart, report text is in both", () => {
+  const group = extractFacts(fixture("group-danish.xml"), "group").facts;
+  const parent = extractFacts(fixture("group-danish.xml"), "parent").facts;
+  const equity = (facts: typeof group) => facts.find((f) => f.concept === "Equity")?.value;
+  assert.equal(equity(group), 400);
+  assert.notEqual(equity(parent), 400);
+  for (const facts of [group, parent]) {
+    assert.ok(facts.some((f) => f.concept === "NameOfReportingEntity" && f.value === "Koncern Holding ApS"));
+  }
+});
+
+test("IFRS: a tagged last quarter does not replace the full year", () => {
+  // Contexts come first so the quarter is seen before the full year.
+  const q4 = `<xbrli:context id="q4"><xbrli:entity><xbrli:identifier scheme="x">1</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:startDate>2025-10-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period></xbrli:context>`;
+  const xml = fixture("ifrs.xml")
+    .replace(/(<xbrli:context id="d2025">)/, `${q4}$1`)
+    .replace("</xbrli:xbrl>", `<ifrs-full:Revenue contextRef="q4" unitRef="eur" decimals="-3">30000000</ifrs-full:Revenue></xbrli:xbrl>`);
+  const f = extractFinancials(xml);
+  assert.deepEqual(f.period, { start: "2025-01-01", end: "2025-12-31" });
+  assert.equal(figure(f, "revenue").current, 120000000);
 });

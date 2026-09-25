@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-09-25
+
+- `search_company`: find a CVR number by company name in the CVR register. Needs free system-to-system credentials (`CVR_USER`, `CVR_PASSWORD`); without them the tool explains how to get access.
+- `get_financials_history`: key figures for up to 15 reporting years in one call, one row per year, corrections replacing originals.
+- `get_report_facts`: every figure and text tagged in an annual report, filterable by concept name, for line items beyond the key figures.
+- `list_filings` gets `year`.
+- All tools declare output schemas and return structured content, and are annotated as read-only. Descriptions say when to use which tool and what comes back when nothing is found.
+- Fix: an annual report that also tags its last quarter (Maersk 2020) returned the quarter instead of the full year.
+
 ## 0.2.0 — 2026-09-24
 
 - `get_financials` gets `scope`: consolidated group (default) or parent company for group reports, in both Danish GAAP and IFRS. Before, a group report could return a mix.
