@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 — 2026-10-01
+
+- Fix: for listed companies (ESEF) `cvr` held the company's LEI code instead of its CVR number. The CVR number now comes from the filing index when the report does not state it.
+- Fix: an auditor name glued to its legal form ("DeloitteStatsautoriseret Revisionspartnerselskab", as filed by Novo Nordisk) gets its space back.
+
 ## 0.3.1 — 2026-09-25
 
 - Published to npm (`npx -y dk-regnskab-mcp`) and listed in the official MCP Registry as `io.github.mikkelmanniche-dk/dk-regnskab-mcp` (`server.json`).
