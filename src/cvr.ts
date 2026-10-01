@@ -15,11 +15,48 @@ export interface Company {
   companyType: string | null;
   industry: string | null;
   address: string | null;
+  employees: string | null;
 }
 
 export class MissingCredentialsError extends Error {}
 
 const M = "Vrvirksomhed.virksomhedMetadata";
+
+// The register ranks by text match alone, so "Novo Nordisk" puts a staff club
+// above NOVO NORDISK A/S. Fetch a wide page and rank it ourselves: active
+// companies first, then names that match exactly (ignoring the legal form, so
+// holding companies like LEGO A/S aren't buried), then size, then text match.
+const SEARCH_PAGE = 100;
+const LEGAL_FORMS = /\b(a\/s|aps|amba|a\.m\.b\.a\.|i\/s|k\/s|p\/s|ivs|smba|fmba)\s*$/;
+const normalizeName = (s: string) => s.toLowerCase().replace(LEGAL_FORMS, "").replace(/\s+/g, " ").trim();
+
+export interface Candidate extends Company {
+  employeesFrom: number;
+  score: number;
+}
+
+export function rankCompanies(candidates: Candidate[], query: string): Company[] {
+  const q = normalizeName(query);
+  const active = (c: Candidate) => /^(normal|aktiv)$/i.test(c.status ?? "");
+  const exact = (c: Candidate) => c.name != null && normalizeName(c.name) === q;
+  return [...candidates]
+    .sort(
+      (a, b) =>
+        Number(active(b)) - Number(active(a)) ||
+        Number(exact(b)) - Number(exact(a)) ||
+        b.employeesFrom - a.employeesFrom ||
+        b.score - a.score,
+    )
+    .map(({ employeesFrom, score, ...company }) => company);
+}
+
+// Employment comes as a size band ("ANTAL_200_499"), sometimes with an exact count.
+function employment(e: any): { employees: string | null; employeesFrom: number } {
+  const band = /ANTAL_(\d+)_(\d+)/.exec(e?.intervalKodeAntalAnsatte ?? "");
+  if (!band) return { employees: null, employeesFrom: e?.antalAnsatte ?? 0 };
+  const [from, to] = [Number(band[1]), Number(band[2])];
+  return { employees: to >= 999999 ? `${from}+` : `${from}-${to}`, employeesFrom: e?.antalAnsatte ?? from };
+}
 
 function formatAddress(a: any): string | null {
   if (!a) return null;
@@ -47,11 +84,12 @@ export async function searchCompanies(query: string, limit = 10): Promise<Compan
       `${M}.nyesteVirksomhedsform.kortBeskrivelse`,
       `${M}.nyesteHovedbranche.branchetekst`,
       `${M}.nyesteBeliggenhedsadresse`,
+      `${M}.nyesteErstMaanedsbeskaeftigelse`,
     ],
     query: /^\d{8}$/.test(digits)
       ? { term: { "Vrvirksomhed.cvrNummer": Number(digits) } }
       : { match: { [`${M}.nyesteNavn.navn`]: { query: q, operator: "and" } } },
-    size: limit,
+    size: SEARCH_PAGE,
   };
   const res = await get(CVR_URL, {
     method: "POST",
@@ -62,7 +100,7 @@ export async function searchCompanies(query: string, limit = 10): Promise<Compan
     body: JSON.stringify(body),
   });
   const json = (await res.json()) as any;
-  return (json?.hits?.hits ?? []).map((h: any): Company => {
+  const candidates = (json?.hits?.hits ?? []).map((h: any): Candidate => {
     const v = h._source?.Vrvirksomhed ?? {};
     const m = v.virksomhedMetadata ?? {};
     return {
@@ -72,6 +110,9 @@ export async function searchCompanies(query: string, limit = 10): Promise<Compan
       companyType: m.nyesteVirksomhedsform?.kortBeskrivelse ?? null,
       industry: m.nyesteHovedbranche?.branchetekst ?? null,
       address: formatAddress(m.nyesteBeliggenhedsadresse),
+      ...employment(m.nyesteErstMaanedsbeskaeftigelse),
+      score: h._score ?? 0,
     };
   });
+  return rankCompanies(candidates, q).slice(0, limit);
 }

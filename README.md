@@ -44,7 +44,7 @@ claude mcp add dk-regnskab -- node /absolute/path/to/dk-regnskab-mcp/dist/index.
 
 | Tool | Input | Returns |
 | --- | --- | --- |
-| `search_company` | `query` (name or CVR number), optional `limit` | Matching companies with CVR number, status, company type, industry and address. Needs CVR credentials, see below |
+| `search_company` | `query` (name or CVR number), optional `limit` | Matching companies with CVR number, status, company type, industry, address and employee size band; active, exactly named and larger companies first. Needs CVR credentials, see below |
 | `list_filings` | `cvr`, optional `limit` (1–50), optional `year` | Published filings, newest first, with document links |
 | `get_financials` | `cvr`, optional `year` (the year the reporting period ends in), optional `scope` (`group` or `parent`) | Company name, period, currency, auditor, key figures (current and previous year), whether it is a group report, notes on gaps, source document URL |
 | `get_financials_history` | `cvr`, optional `years` (1–15), optional `scope` | Key figures per reporting year, newest first |

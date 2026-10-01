@@ -47,7 +47,7 @@ server.registerTool(
     title: "Search Danish companies by name",
     description:
       "Find a Danish company's CVR number by name (or check a CVR number) in the CVR register. Use it first when you only have a name; every other tool needs the CVR number. " +
-      "Matches all words of the query against current company names; returns name, status, company type, industry and address. " +
+      "Matches all words of the query against current company names; returns name, status, company type, industry, address and employee size band, with active, exactly named and larger companies first. " +
       "Needs CVR_USER and CVR_PASSWORD in the server's environment (free system-to-system access to the CVR register); without them it returns an error saying how to get access.",
     inputSchema: {
       query: z.string().min(2).describe("Company name or part of it, e.g. \"Carlsberg\" or \"lego a/s\". An 8-digit CVR number looks up that company."),
@@ -63,9 +63,10 @@ server.registerTool(
             companyType: z.string().nullable().describe("Legal form, e.g. APS or A/S."),
             industry: z.string().nullable(),
             address: z.string().nullable(),
+            employees: z.string().nullable().describe("Size band from the register's latest monthly employment figures, e.g. \"200-499\" or \"1000+\"."),
           }),
         )
-        .describe("Best matches first; empty when nothing matches."),
+        .describe("Active companies first, then exact name matches, then the largest; empty when nothing matches."),
     },
     annotations: readOnly,
   },

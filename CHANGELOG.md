@@ -2,6 +2,7 @@
 
 ## 0.3.2 — 2026-10-01
 
+- `search_company` ranks results itself: active companies first, then exact name matches (ignoring A/S, ApS and other legal forms), then the largest. Before, "Novo Nordisk" returned a staff riding club above NOVO NORDISK A/S. Results now include an employee size band. Tested live against the CVR register.
 - Fix: for listed companies (ESEF) `cvr` held the company's LEI code instead of its CVR number. The CVR number now comes from the filing index when the report does not state it.
 - Fix: an auditor name glued to its legal form ("DeloitteStatsautoriseret Revisionspartnerselskab", as filed by Novo Nordisk) gets its space back.
 
