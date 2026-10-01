@@ -119,6 +119,7 @@ async function readFiling(filing: Filing, scope: Scope): Promise<{ financials: F
     f.auditor.firm ??= other.auditor.firm;
     f.auditor.assistance ??= other.auditor.assistance;
   }
+  f.cvr ??= filing.cvr;
   if (filing.correction) f.notes.push("This filing is a correction (omgørelse) of an earlier one.");
   return best;
 }

@@ -166,6 +166,14 @@ export function parseInstance(xml: string): { contexts: Map<string, Context>; fa
 // table around the company name).
 const cleanText = (v: string) => v.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
+// The context identifier is a CVR number in Danish GAAP filings but a LEI in
+// ESEF filings, so it only stands in for the CVR when it looks like one.
+const asCvr = (v: string | undefined) => (v && /^\d{8}$/.test(v) ? v : null);
+
+// Some filings lose the line break between the firm's name and its legal
+// form ("DeloitteStatsautoriseret Revisionspartnerselskab", Novo Nordisk 2025).
+const cleanAuditFirm = (v: string | null) => v?.replace(/(?<=\p{Ll})(?=(Statsautoriseret|Registreret) )/gu, " ") ?? null;
+
 function textFact(facts: Fact[], ns: string, name: string): string | null {
   const v = facts.find((f) => f.ns === ns && f.name === name)?.value;
   return v == null ? null : cleanText(v) || null;
@@ -321,7 +329,7 @@ export function extractFinancials(xml: string, scope: Scope = "group"): Financia
   }
 
   return {
-    cvr: textFact(facts, NS.gsd, "IdentificationNumberCvrOfReportingEntity") ?? [...contexts.values()][0]?.entity ?? null,
+    cvr: textFact(facts, NS.gsd, "IdentificationNumberCvrOfReportingEntity") ?? asCvr([...contexts.values()][0]?.entity),
     // ESEF filings name the company in the IFRS taxonomy instead of gsd.
     name:
       textFact(facts, NS.gsd, "NameOfReportingEntity") ??
@@ -337,7 +345,7 @@ export function extractFinancials(xml: string, scope: Scope = "group"): Financia
     previousPeriod: previous,
     currency: currencyUnits.size === 1 ? [...currencyUnits][0]! : null,
     auditor: {
-      firm: textFact(facts, NS.cmn, "NameOfAuditFirm"),
+      firm: cleanAuditFirm(textFact(facts, NS.cmn, "NameOfAuditFirm")),
       assistance: textFact(facts, NS.cmn, "TypeOfAuditorAssistance"),
     },
     figures,
