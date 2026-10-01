@@ -47,6 +47,8 @@ test("IFRS/ESEF: infers periods from contexts and reads IFRS concepts", () => {
   assert.equal(f.taxonomy, "ifrs");
   // Markup inside the name fact is stripped.
   assert.equal(f.name, "Example A/S");
+  // The context identifier is a LEI, not a CVR number.
+  assert.equal(f.cvr, null);
   assert.equal(f.currency, "EUR");
   assert.deepEqual(f.period, { start: "2025-01-01", end: "2025-12-31" });
   assert.equal(figure(f, "revenue").current, 120000000);
@@ -145,4 +147,9 @@ test("IFRS: a tagged last quarter does not replace the full year", () => {
   const f = extractFinancials(xml);
   assert.deepEqual(f.period, { start: "2025-01-01", end: "2025-12-31" });
   assert.equal(figure(f, "revenue").current, 120000000);
+});
+
+test("Auditor: a legal form glued to the firm's name gets its space back", () => {
+  const xml = fixture("danish-gaap.xml").replace("Revisor &amp; Co", "DeloitteStatsautoriseret Revisionspartnerselskab");
+  assert.equal(extractFinancials(xml).auditor.firm, "Deloitte Statsautoriseret Revisionspartnerselskab");
 });
