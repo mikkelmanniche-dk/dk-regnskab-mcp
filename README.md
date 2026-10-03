@@ -115,7 +115,10 @@ npm test          # parser tests against synthetic fixtures (no network)
 npm run measure   # live check against real filings (network)
 npm run typecheck
 npm run build
+npm run ci         # typecheck + test + build, som CI
 ```
+
+Run `npm run ci` before merging; it mirrors .github/workflows/ci.yml. CI tests on Node 22 and 24; locally it runs on whichever Node you have.
 
 ## Roadmap
 
